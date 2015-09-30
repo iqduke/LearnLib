@@ -1,0 +1,88 @@
+-->条件
+if condition :
+  ……
+elif condition2 :
+  ……
+else :
+  ……
+-->循环
+for x in ……
+while conditon:
+
+-->range
+>>> range(10)
+[0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+>>> 
+
+-->函数
+定义：
+def funcname(params):
+  ……
+  
+空函数：
+def nop():
+  pass
+
+调用
+funcname(params)
+
+-->isinstance是个函数 判断类型，或对象实例
+>>> isinstance(a,int)
+True
+>>> isinstance(a,float)
+False
+>>> isinstance(a,(int,float,str))
+True
+>>> 
+
+-->函数参数
+普通参数
+def funcname(a):
+  pass
+  
+默认参数,且默认参数放在普通参数后面
+>>> def funcname(a,b=3,c='hello'):
+	print a,b,c
+
+	
+>>> funcname("haha")
+haha 3 hello
+>>> funcname("haha",6)
+haha 6 hello
+>>> funcname("haha","ssss")
+haha ssss hello
+>>> funcname("haha",c="ssss")
+haha 3 ssss
+>>> 
+
+-->可变参数
+def funcname(*s):
+  pass
+  
+-->关键字参数
+可变参数允许你传入0个或任意个参数，这些可变参数在函数调用时自动组装为一个tuple。
+而关键字参数允许你传入0个或任意个含参数名的参数，这些关键字参数在函数内部自动组装为一个dict
+def funcname(a,b,**kw):
+  pass
+
+>>> kw = {'city': 'Beijing', 'job': 'Engineer'}
+>>> def person(name,age,**kw):
+	print 'name:', name, 'age:', age, 'other:', kw
+
+	
+
+>>> person("moyan","60",**kw)
+name: moyan age: 60 other: {'city': 'Beijing', 'job': 'Engineer'}
+>>> 
+
+参数组合
+
+在Python中定义函数，可以用必选参数、默认参数、可变参数和关键字参数，这4种参数都可以一起使用，
+或者只用其中某些，但是请注意，参数定义的顺序必须是：必选参数、默认参数、可变参数和关键字参数。
+
+比如定义一个函数，包含上述4种参数：
+
+def func(a, b, c=0, *args, **kw):
+    print 'a =', a, 'b =', b, 'c =', c, 'args =', args, 'kw =', kw
+    
+所以，对于任意函数，都可以通过类似func(*args, **kw)的形式调用它，无论它的参数是如何定义的。
