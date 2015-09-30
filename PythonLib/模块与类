@@ -1,0 +1,242 @@
+
+1.模块
+一个.py文件就称之为一个模块（Module），可以通过包来组织模块，避免冲突，
+请注意，每一个包目录下面都会有一个__init__.py的文件，这个文件是必须存在的
+
+导入模块 import
+import sys
+
+别名使用 as 
+try:
+    import cStringIO as StringIO
+except ImportError: # 导入失败会捕获到ImportError
+    import StringIO
+
+作用域
+public 普通的变量，函数
+private _,__开头的，不建议被引用
+特殊变量 __xx__ ，可以被直接引用，但是有特殊用途
+
+2.第三方模块
+使用pip easy_install包管理工具。
+安装第三方模块，是通过setuptools这个工具完成的。
+Python有两个封装了setuptools的包管理工具：easy_install和pip。目前官方推荐使用pip。
+
+3.面向对象 OOP
+-->类 class
+定义： class className(parentClassName):
+          pass
+如果没有父类可以用object
+>>> class Person(object):
+	pass
+
+>>> Person
+<class '__main__.Person'>
+>>> 
+
+python类的构造上述 __init__(self,*args,**kw):
+
+类的访问限制
+私有变量，外部不能访问，使用__xxx
+>>> class Stu(object):
+	def __init__(self,name,age):
+		self.__name=name
+		self.age=age
+
+		
+>>> stu = Stu("xiaolv",20)
+>>> stu.age
+20
+>>> stu.__name
+
+Traceback (most recent call last):
+  File "<pyshell#104>", line 1, in <module>
+    stu.__name
+AttributeError: 'Stu' object has no attribute '__name'
+>>> 
+
+类的继承和多态
+>>> class animal(object):
+	def run(self):
+		print "animal is running"
+
+>>> class dog(animal):
+	pass
+
+>>> class cat(animal):
+	pass
+
+>>> 
+>>> d = dog()
+>>> d.run()
+animal is running
+>>> c = cat()
+>>> c.run()
+animal is running
+>>> 
+
+获取对象信息
+使用type()获取对象的类型
+>>> type(124)
+<type 'int'>
+>>> type("233")
+<type 'str'>
+>>> type(cat)
+<type 'type'>
+>>> type(c)
+<class '__main__.cat'>
+>>> 
+
+isinstance() 判断对象是否是类的实例
+>>> isinstance(a,animal)
+True
+>>> isinstance(d,dog)
+True
+>>> isinstance(2,int)
+True
+>>> 
+并且还可以判断一个变量是否是某些类型中的一种，比如下面的代码就可以判断是否是str或者unicode：
+>>> isinstance('a', (str, unicode))
+True
+>>> isinstance(u'a', (str, unicode))
+True
+
+使用dir()
+
+如果要获得一个对象的所有属性和方法，可以使用dir()函数，它返回一个包含字符串的list，比如，获得一个str对象的所有属性和方法
+
+>>> dir(a)
+['__class__', '__delattr__', '__dict__', '__doc__', '__format__', '__getattribute__', '__hash__', '__init__',
+'__module__', '__new__', '__reduce__', '__reduce_ex__', '__repr__', '__setattr__', '__sizeof__', '__str__', 
+'__subclasshook__', '__weakref__', 'run']
+>>> 
+
+配合getattr()、setattr()以及hasattr()，我们可以直接操作一个对象的状态
+>>> class myobject(object):
+	def __init__(self):
+		self.x=20
+	def power(self):
+		return self.x*self.x
+
+	
+>>> obj = myobject()
+>>> obj
+<__main__.myobject object at 0x0000000002A06390>
+>>> hasattr(obj,x)
+
+Traceback (most recent call last):
+  File "<pyshell#166>", line 1, in <module>
+    hasattr(obj,x)
+TypeError: hasattr(): attribute name must be string
+>>> hasattr(obj,'x')
+True
+>>> obj.x
+20
+>>> hasattr(obj,'y')
+False
+>>> setattr(obj,'y',10)
+>>> hasattr(obj,'y')
+True
+>>> getattr(obj,'y')
+10
+>>> obj.y
+10
+>>> hasattr(obj,'power')
+True
+>>> getattr(obj,'power')
+<bound method myobject.power of <__main__.myobject object at 0x0000000002A06390>>
+>>> getattr(obj,'power')()
+400
+>>> 
+
+使用__slots__
+正常情况下，当我们定义了一个class，创建了一个class的实例后，我们可以给该实例绑定任何属性和方法，这就是动态语言的灵活性
+先定义后赋值
+方法绑定
+>>> from types import MethodType
+>>> obj.add1 = MethodType(add,obj,myobject)
+>>> obj.add1(10,10)
+20
+>>> 
+为了给所有实例都绑定方法，可以给class绑定方法：
+
+>>> def set_score(self, score):
+...     self.score = score
+...
+>>> Student.set_score = MethodType(set_score, None, Student)
+使用__slots__达到限制的目的，Python允许在定义class的时候，定义一个特殊的__slots__变量，来限制该class能添加的属性
+使用__slots__要注意，__slots__定义的属性仅对当前类起作用，对继承的子类是不起作用的
+除非在子类中也定义__slots__，这样，子类允许定义的属性就是自身的__slots__加上父类的__slots__
+
+@property
+Python内置的@property装饰器就是负责把一个方法变成属性调用的：
+class Student(object):
+
+    @property
+    def score(self):
+        return self._score
+
+    @score.setter
+    def score(self, value):
+        if not isinstance(value, int):
+            raise ValueError('score must be an integer!')
+        if value < 0 or value > 100:
+            raise ValueError('score must between 0 ~ 100!')
+        self._score = value
+@property的实现比较复杂，我们先考察如何使用。把一个getter方法变成属性，只需要加上@property就可以了，
+此时，@property本身又创建了另一个装饰器@score.setter，负责把一个setter方法变成属性赋值，
+于是，我们就拥有一个可控的属性操作
+
+多继承
+class classname(pcn1,pcn2,pnc3):
+  pass
+  
+由于Python允许使用多重继承，因此，Mixin就是一种常见的设计。
+
+只允许单一继承的语言（如Java）不能使用Mixin的设计。
+
+定制类
+
+阅读: 7109
+看到类似__slots__这种形如__xxx__的变量或者函数名就要注意，这些在Python中是有特殊用途的。
+
+__slots__我们已经知道怎么用了，__len__()方法我们也知道是为了能让class作用于len()函数。
+
+除此之外，Python的class中还有许多这样有特殊用途的函数，可以帮助我们定制类。
+
+__str__() 打印 print
+__repr__()
+ __repr__ = __str__
+ 
+ __iter__迭代
+ 
+ __getitem__取下标
+ __getattr__只有在没有找到属性的情况下，才调用__getattr__
+ def __getattr__(self, attr):
+        if attr=='age':
+            return lambda: 25
+        raise AttributeError('\'Student\' object has no attribute \'%s\'' % attr)
+如果要写SDK，给每个URL对应的API都写一个方法，那得累死，而且，API一旦改动，SDK也要改。
+
+利用完全动态的__getattr__，我们可以写出一个链式调用：
+
+class Chain(object):
+
+    def __init__(self, path=''):
+        self._path = path
+
+    def __getattr__(self, path):
+        return Chain('%s/%s' % (self._path, path))
+
+    def __str__(self):
+        return self._path
+试试：
+
+>>> Chain().status.user.timeline.list
+'/status/user/timeline/list'
+
+__call__
+任何类，只需要定义一个__call__()方法，就可以直接对实例进行调用
+通过callable()函数，我们就可以判断一个对象是否是“可调用”对象。
+
+
