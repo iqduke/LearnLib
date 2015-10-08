@@ -1,1 +1,147 @@
 
+1.文件的读写操作
+python内置了读写文件的函数，与c兼容
+
+读文件，open()
+如果文件不存在会抛出一个IOError的异常，并给出错误码和错误信息，如果打开成功，则可调用read()来读文件
+而后可以调用close()关闭文件
+
+因为会抛出一个IOError的异常，所以可以使用try...finally...来正确的打开和关闭文件
+python引入with可以帮助我们自动关闭文件 with open("////","r") as f: print f.read()
+read(size) size为字节数
+readline()每次读取一行
+调用readlines()一次读取所有内容并按行返回list
+如果文件很小，read()一次性读取最方便；如果不能确定文件大小，反复调用read(size)比较保险；如果是配置文件，调用readlines()最方便：
+>>> with open("c:/Python27/mmmmmm.py",'r') as f:
+	print f.read()
+
+	
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
+' Simple ORM using metaclass '
+
+__author__ = 'Michael Liao'
+
+class Field(object):
+    def __init__(self, name, column_type):
+        self.name = name
+        self.column_type = column_type
+    def __str__(self):
+        return '<%s:%s>' % (self.__class__.__name__, self.name)
+
+class StringField(Field):
+    def __init__(self, name):
+        super(StringField, self).__init__(name, 'varchar(100)')
+
+class IntegerField(Field):
+    def __init__(self, name):
+        super(IntegerField, self).__init__(name, 'bigint')
+
+class ModelMetaclass(type):
+
+    def __new__(cls, name, bases, attrs):
+        if name=='Model':
+            return type.__new__(cls, name, bases, attrs)
+        print('Found model: %s' % name)
+        mappings = dict()
+        for k, v in attrs.iteritems():
+            if isinstance(v, Field):
+                print('Found mapping: %s ==> %s' % (k, v))
+                mappings[k] = v
+        for k in mappings.iterkeys():
+            attrs.pop(k)
+        attrs['__mappings__'] = mappings # 保存属性和列的映射关系
+        attrs['__table__'] = name # 假设表名和类名一致
+        return type.__new__(cls, name, bases, attrs)
+
+class Model(dict):
+    __metaclass__ = ModelMetaclass
+
+    def __init__(self, **kw):
+        super(Model, self).__init__(**kw)
+
+    def __getattr__(self, key):
+        try:
+            return self[key]
+        except KeyError:
+            raise AttributeError(r"'Model' object has no attribute '%s'" % key)
+
+    def __setattr__(self, key, value):
+        self[key] = value
+
+    def save(self):
+        fields = []
+        params = []
+        args = []
+        for k, v in self.__mappings__.iteritems():
+            fields.append(v.name)
+            params.append('?')
+            args.append(getattr(self, k, None))
+        sql = 'insert into %s (%s) values (%s)' % (self.__table__, ','.join(fields), ','.join(params))
+        print('SQL: %s' % sql)
+        print('ARGS: %s' % str(args))
+
+# testing code:
+
+class User(Model):
+    id = IntegerField('uid')
+    name = StringField('username')
+    email = StringField('email')
+    password = StringField('password')
+
+u = User(id=12345, name='Michael', email='test@orm.org', password='my-pwd')
+u.save()
+
+>>> 
+
+file-like Object
+像open()函数返回的这种有个read()方法的对象，在Python中统称为file-like Object。
+除了file外，还可以是内存的字节流，网络流，自定义流等等。file-like Object不要求从特定类继承，只要写个read()方法就行。
+
+二进制文件的读取使用,rb即：f=open('','rb');
+字符编码的文件，使用rb，然后解码u = f.read().decode('gbk')
+
+Python内置的os模块也可以直接调用操作系统提供的接口函数
+os.name,os.environ,os.getevn('')
+操作文件和目录：
+os.path.abspath(".") 绝对路径
+os.path.mkdir("/////") 创建目录
+os.path.rmdir("////")  删除目录
+os.path.join("////",""//) 合并目录
+os.path.split() 拆分目录，分两部分，后一部分始终是最后级别的目录或文件名
+os.path.splitext() 获得文件扩展名
+os.rename("sname","dname") 文件改名
+os.remove("name") 删除文件
+
+
+序列化:
+我们把变量从内存中变成可存储或传输的过程称之为序列化，在Python中叫pickling，
+在其他语言中也被称之为serialization，marshalling，flattening等等，都是一个意思。
+
+序列化之后，就可以把序列化后的内容写入磁盘，或者通过网络传输到别的机器上。
+
+反过来，把变量内容从序列化的对象重新读到内存里称之为反序列化，即unpickling。
+
+Python提供两个模块来实现序列化：cPickle和pickle。这两个模块功能是一样的，
+区别在于cPickle是C语言写的，速度快，pickle是纯Python写的，速度慢，跟cStringIO和StringIO一个道理。
+用的时候，先尝试导入cPickle，如果失败，再导入pickle：
+
+try:
+    import cPickle as pickle
+except ImportError:
+    import pickle
+
+pickle.dumps()方法把任意对象序列化成一个str，然后，就可以把这个str写入文件。
+或者用另一个方法pickle.dump()直接把对象序列化后写入一个file-like Object：
+
+当我们要把对象从磁盘读到内存时，可以先把内容读到一个str，然后用pickle.loads()方法反序列化出对象，
+也可以直接用pickle.load()方法从一个file-like Object中直接反序列化出对象
+
+JSON
+
+Python内置的json模块提供了非常完善的Python对象到JSON格式的转换
+dumps()方法返回一个str，内容就是标准的JSON。类似的，dump()方法可以直接把JSON写入一个file-like Object。
+
+要把JSON反序列化为Python对象，用loads()或者对应的load()方法，前者把JSON的字符串反序列化，
+后者从file-like Object中读取字符串并反序列化
